@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StasyaChess Pro - Игра с Stockfish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background-color: rgba(25, 25, 35, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+
+        header {
+            background: linear-gradient(90deg, #0f3460 0%, #1a1a2e 100%);
+            padding: 25px 40px;
+            border-bottom: 3px solid #e94560;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .logo i {
+            font-size: 2.8rem;
+            color: #e94560;
+        }
+
+        .logo h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #e94560, #ff7e5f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 500px 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .board-section {
+            background: rgba(40, 40, 60, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .board-header h3 {
+            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #board-container {
+            width: 460px;
+            height: 460px;
+            margin: 0 auto;
+            border: 4px solid #394867;
+            border-radius: 5px;
+            background: #f0d9b5;
+            position: relative;
+        }
+
+        .chess-board {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+        }
+
+        .control-panel {
+            background: rgba(40, 40, 60, 0.7);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-section h3 {
+            color: #4cc9f0;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-color-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .color-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(57, 72, 103, 0.8);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .color-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .color-btn.active {
+            background: linear-gradient(90deg, #e94560, #ff7e5f);
+        }
+
+        .difficulty-selector {
+            margin-top: 25px;
+        }
+
+        .difficulty-slider {
+            width: 100%;
+            height: 40px;
+            -webkit-appearance: none;
+            background: linear-gradient(90deg, #4CAF50, #FF9800, #F44336);
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+
+        .difficulty-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #394867;
+            cursor: pointer;
+        }
+
+        .game-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #e94560, #ff7e5f);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(57, 72, 103, 0.8);
+            color: white;
+            border: 1px solid #4a5f8a;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(30, 30, 46, 0.9);
+            border-radius: 8px;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(40, 40, 60, 0.7);
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            color: #a9b7c6;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #4cc9f0;
+        }
+
+        /* Стили для шахматной доски */
+        .board-square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .light-square {
+            background-color: #f0d9b5;
+        }
+
+        .dark-square {
+            background-color: #b58863;
+        }
+
+        .board-square.selected {
+            background-color: rgba(76, 201, 240, 0.7) !important;
+        }
+
+        .board-square.legal-move::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+        }
+
+        .board-square.legal-capture::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid rgba(255, 0, 0, 0.4);
+            border-radius: 50%;
+            box-sizing: border-box;
+        }
+
+        .black-piece {
+            color: #000;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .white-piece {
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .notation {
+            position: absolute;
+            font-size: 0.8rem;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .notation-file {
+            bottom: 2px;
+            right: 2px;
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .notation-rank {
+            top: 2px;
+            left: 2px;
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .engine-status {
+            background: rgba(76, 201, 240, 0.1);
+            border-left: 4px solid #4cc9f0;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(76, 201, 240, 0.3);
+            border-top: 4px solid #4cc9f0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-chess-knight"></i>
+                <h1>StasyaChess Pro</h1>
+            </div>
+            <div style="margin-left: 55px; font-size: 0.9rem; opacity: 0.8;">
+                Stockfish 16 - Сильнейший шахматный движок
+            </div>
+        </header>
+
+        <div class="game-container">
+            <div class="board-section">
+                <div class="board-header">
+                    <h3><i class="fas fa-chess-board"></i> Шахматная доска</h3>
+                    <div id="game-status">Загрузка Stockfish...</div>
+                </div>
+                <div id="board-container">
+                    <div class="chess-board" id="chess-board"></div>
+                </div>
+                
+                <div class="game-info">
+                    <div class="info-item">
+                        <div class="info-label">ХОД</div>
+                        <div class="info-value" id="current-turn">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">УРОВЕНЬ</div>
+                        <div class="info-value" id="current-level">5</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">ОЦЕНКА</div>
+                        <div class="info-value" id="position-eval">0.00</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">ХОДОВ</div>
+                        <div class="info-value" id="move-count">0</div>
+                    </div>
+                </div>
+
+                <div class="engine-status" id="engine-status">
+                    <i class="fas fa-cog fa-spin"></i>
+                    <div>
+                        <div style="font-weight: 600;">Загрузка Stockfish...</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">Используется WebAssembly версия</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3><i class="fas fa-user-cog"></i> Настройки игрока</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="margin-bottom: 12px;">Ваш цвет:</div>
+                        <div class="player-color-selector">
+                            <button class="color-btn active" id="color-white" data-color="white">
+                                <i class="fas fa-chess-king white-piece"></i>
+                                <span>Белые</span>
+                            </button>
+                            <button class="color-btn" id="color-black" data-color="black">
+                                <i class="fas fa-chess-king black-piece"></i>
+                                <span>Черные</span>
+                            </button>
+                            <button class="color-btn" id="color-random" data-color="random">
+                                <i class="fas fa-random"></i>
+                                <span>Случайно</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="difficulty-selector">
+                        <div style="margin-bottom: 12px;">Уровень сложности:</div>
+                        <input type="range" min="1" max="20" value="5" class="difficulty-slider" id="difficulty-slider">
+                        <div style="text-align: center; margin-top: 10px; color: #4cc9f0;" id="difficulty-text">
+                            Уровень 5 (ELO ~1500)
+                        </div>
+                    </div>
+                    
+                    <div class="game-controls">
+                        <button id="new-game-btn" class="btn btn-primary" disabled>
+                            <i class="fas fa-plus-circle"></i> Новая игра
+                        </button>
+                        <button id="undo-btn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-undo"></i> Отменить ход
+                        </button>
+                        <button id="hint-btn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-lightbulb"></i> Подсказка
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <h3><i class="fas fa-chart-line"></i> Анализ позиции</h3>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 1.2rem; margin-bottom: 10px; color: #a9b7c6;">
+                            <span id="eval-perspective">С точки зрения белых:</span>
+                        </div>
+                        <div style="font-size: 2.5rem; font-weight: bold; color: #4cc9f0;" id="position-analysis">
+                            0.00
+                        </div>
+                        <div style="margin-top: 10px; color: #a9b7c6;" id="eval-description">
+                            Равная позиция
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(30, 30, 46, 0.9); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #000;">Черные</span>
+                            <span style="color: #fff;">Белые</span>
+                        </div>
+                        <div style="height: 10px; background: linear-gradient(90deg, #000, #fff); border-radius: 5px; position: relative;">
+                            <div id="eval-bar" style="position: absolute; left: 50%; width: 4px; height: 20px; background: #e94560; top: -5px; transform: translateX(-50%);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3><i class="fas fa-robot"></i> Stockfish 16</h3>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 2rem; font-weight: bold; color: #4cc9f0;" id="player-elo">-</div>
+                        <div style="margin-top: 10px; color: #a9b7c6;">Ваш примерный ELO</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="padding: 20px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 0.9rem; opacity: 0.8;">
+                StasyaChess Pro | Stockfish 16 WebAssembly | Работает в браузере
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ==================== КОНСТАНТЫ ====================
+        const PIECE_SYMBOLS = {
+            'p': '♟', 'n': '♞', 'b': '♝', 'r': '♜', 'q': '♛', 'k': '♚',
+            'P': '♙', 'N': '♘', 'B': '♗', 'R': '♖', 'Q': '♕', 'K': '♔'
+        };
+
+        const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+        // Направления для фигур
+        const DIRECTIONS = {
+            pawn: { white: -1, black: 1 },
+            knight: [
+                [2, 1], [2, -1], [-2, 1], [-2, -1],
+                [1, 2], [1, -2], [-1, 2], [-1, -2]
+            ],
+            bishop: [
+                [1, 1], [1, -1], [-1, 1], [-1, -1]
+            ],
+            rook: [
+                [1, 0], [-1, 0], [0, 1], [0, -1]
+            ],
+            queen: [
+                [1, 1], [1, -1], [-1, 1], [-1, -1],
+                [1, 0], [-1, 0], [0, 1], [0, -1]
+            ],
+            king: [
+                [1, 1], [1, 0], [1, -1],
+                [0, 1], [0, -1],
+                [-1, 1], [-1, 0], [-1, -1]
+            ]
+        };
+
+        // ==================== СОСТОЯНИЕ ИГРЫ ====================
+        let gameState = {
+            board: [], // 8x8 массив с фигурами
+            playerColor: 'white',
+            currentTurn: 'white',
+            selectedSquare: null,
+            legalMoves: [],
+            moves: [],
+            engineLevel: 5,
+            isGameActive: false,
+            stockfish: null,
+            stockfishReady: false,
+            currentPositionEval: 0.00
+        };
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+            initBoard();
+            setupEventListeners();
+            await initStockfish();
+        });
+
+        // ==================== STOCKFISH ИНИЦИАЛИЗАЦИЯ ====================
+        async function initStockfish() {
+            try {
+                document.getElementById('engine-status').innerHTML = `
+                    <i class="fas fa-cog fa-spin"></i>
+                    <div>
+                        <div style="font-weight: 600;">Загрузка Stockfish...</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">Инициализация движка</div>
+                    </div>
+                `;
+
+                // Используем Stockfish через CDN (WebAssembly версия)
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/stockfish.js@14.0.0/stockfish.js';
+                script.onload = async () => {
+                    try {
+                        // Создаем экземпляр Stockfish
+                        gameState.stockfish = new Worker('https://unpkg.com/stockfish.js@14.0.0/stockfish.js');
+                        
+                        gameState.stockfish.onmessage = function(event) {
+                            handleStockfishMessage(event.data);
+                        };
+                        
+                        // Инициализируем движок
+                        gameState.stockfish.postMessage('uci');
+                        gameState.stockfish.postMessage('isready');
+                        
+                    } catch (error) {
+                        console.error('Ошибка загрузки Stockfish:', error);
+                        showError('Не удалось загрузить Stockfish. Используется локальная логика.');
+                        setupLocalEngine();
+                    }
+                };
+                
+                script.onerror = () => {
+                    showError('Не удалось загрузить Stockfish. Используется локальная логика.');
+                    setupLocalEngine();
+                };
+                
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                showError('Ошибка инициализации. Используется локальная логика.');
+                setupLocalEngine();
+            }
+        }
+
+        function setupLocalEngine() {
+            // Локальная логика для демо
+            gameState.stockfishReady = true;
+            document.getElementById('engine-status').innerHTML = `
+                <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                <div>
+                    <div style="font-weight: 600;">Локальный движок</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Stockfish недоступен</div>
+                </div>
+            `;
+            enableGameControls();
+            startNewGame();
+        }
+
+        function handleStockfishMessage(message) {
+            console.log('Stockfish:', message);
+            
+            if (message === 'uciok') {
+                console.log('Stockfish UCI готов');
+            } else if (message === 'readyok') {
+                console.log('Stockfish готов к работе');
+                gameState.stockfishReady = true;
+                
+                document.getElementById('engine-status').innerHTML = `
+                    <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                    <div>
+                        <div style="font-weight: 600;">Stockfish 16 готов</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">Уровень: ${gameState.engineLevel}</div>
+                    </div>
+                `;
+                
+                enableGameControls();
+                startNewGame();
+                
+            } else if (message.startsWith('info')) {
+                // Обработка информации от движка
+                const parts = message.split(' ');
+                for (let i = 0; i < parts.length; i++) {
+                    if (parts[i] === 'score' && parts[i + 1] === 'cp') {
+                        const cp = parseInt(parts[i + 2]);
+                        updatePositionEval(cp);
+                    }
+                }
+            } else if (message.startsWith('bestmove')) {
+                const bestmove = message.split(' ')[1];
+                if (bestmove && bestmove !== '(none)') {
+                    executeEngineMove(bestmove);
+                }
+            }
+        }
+
+        function enableGameControls() {
+            document.getElementById('new-game-btn').disabled = false;
+            document.getElementById('hint-btn').disabled = false;
+            document.getElementById('game-status').textContent = 'Готов к игре';
+        }
+
+        function showError(message) {
+            document.getElementById('engine-status').innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="color: #F44336;"></i>
+                <div>
+                    <div style="font-weight: 600;">${message}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Игра будет продолжена</div>
+                </div>
+            `;
+        }
+
+        // ==================== ШАХМАТНАЯ ДОСКА ====================
+        function initBoard() {
+            const board = document.getElementById('chess-board');
+            board.innerHTML = '';
+            
+            // Создаем доску всегда от a1 в левом нижнем углу
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = `board-square ${(row + col) % 2 === 0 ? 'light-square' : 'dark-square'}`;
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    
+                    // Добавляем обозначения полей
+                    if (row === 7) { // нижний ряд
+                        const file = document.createElement('div');
+                        file.className = 'notation notation-file';
+                        file.textContent = String.fromCharCode(97 + col);
+                        square.appendChild(file);
+                    }
+                    if (col === 0) { // левый столбец
+                        const rank = document.createElement('div');
+                        rank.className = 'notation notation-rank';
+                        rank.textContent = (8 - row).toString();
+                        square.appendChild(rank);
+                    }
+                    
+                    square.addEventListener('click', () => handleSquareClick(row, col));
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        function updateBoard() {
+            // Очищаем доску
+            document.querySelectorAll('.board-square').forEach(square => {
+                square.innerHTML = '';
+                square.classList.remove('selected', 'legal-move', 'legal-capture');
+                
+                // Восстанавливаем обозначения
+                const row = parseInt(square.dataset.row);
+                const col = parseInt(square.dataset.col);
+                
+                if (row === 7) {
+                    const file = document.createElement('div');
+                    file.className = 'notation notation-file';
+                    file.textContent = String.fromCharCode(97 + col);
+                    square.appendChild(file);
+                }
+                if (col === 0) {
+                    const rank = document.createElement('div');
+                    rank.className = 'notation notation-rank';
+                    rank.textContent = (8 - row).toString();
+                    square.appendChild(rank);
+                }
+            });
+            
+            // Расставляем фигуры
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = gameState.board[row][col];
+                    if (piece) {
+                        const square = document.querySelector(`.board-square[data-row="${row}"][data-col="${col}"]`);
+                        const pieceElement = document.createElement('div');
+                        pieceElement.textContent = PIECE_SYMBOLS[piece];
+                        pieceElement.style.cursor = 'pointer';
+                        pieceElement.style.fontSize = '2.8rem';
+                        pieceElement.style.lineHeight = '1';
+                        
+                        // Черные фигуры - черным цветом
+                        if (piece === piece.toLowerCase()) {
+                            pieceElement.classList.add('black-piece');
+                        } else {
+                            pieceElement.classList.add('white-piece');
+                        }
+                        
+                        square.appendChild(pieceElement);
+                    }
+                }
+            }
+            
+            // Если игрок черными, показываем его фигуры внизу
+            if (gameState.playerColor === 'black') {
+                rotateBoardForBlack();
+            }
+        }
+
+        function rotateBoardForBlack() {
+            // Перерисовываем фигуры так, чтобы черные были внизу
+            const squares = document.querySelectorAll('.board-square');
+            squares.forEach(square => {
+                const row = parseInt(square.dataset.row);
+                const col = parseInt(square.dataset.col);
+                
+                // Переворачиваем координаты: из (0,0) в (7,7)
+                const flippedRow = 7 - row;
+                const flippedCol = 7 - col;
+                
+                const piece = gameState.board[flippedRow]?.[flippedCol];
+                square.innerHTML = '';
+                
+                // Обновляем обозначения для черных
+                if (row === 7) { // нижний ряд для черных игроков
+                    const file = document.createElement('div');
+                    file.className = 'notation notation-file';
+                    file.textContent = String.fromCharCode(97 + (7 - col)); // зеркально
+                    square.appendChild(file);
+                }
+                if (col === 0) { // левый столбец для черных игроков
+                    const rank = document.createElement('div');
+                    rank.className = 'notation notation-rank';
+                    rank.textContent = (row + 1).toString(); // обратный порядок
+                    square.appendChild(rank);
+                }
+                
+                if (piece) {
+                    const pieceElement = document.createElement('div');
+                    pieceElement.textContent = PIECE_SYMBOLS[piece];
+                    pieceElement.style.cursor = 'pointer';
+                    pieceElement.style.fontSize = '2.8rem';
+                    pieceElement.style.lineHeight = '1';
+                    
+                    if (piece === piece.toLowerCase()) {
+                        pieceElement.classList.add('black-piece');
+                    } else {
+                        pieceElement.classList.add('white-piece');
+                    }
+                    
+                    square.appendChild(pieceElement);
+                }
+            });
+        }
+
+        function loadFEN(fen) {
+            const parts = fen.split(' ');
+            const boardStr = parts[0];
+            const rows = boardStr.split('/');
+            
+            // Инициализируем пустую доску
+            gameState.board = Array(8).fill().map(() => Array(8).fill(null));
+            
+            // Заполняем доску из FEN
+            for (let i = 0; i < 8; i++) {
+                let col = 0;
+                for (let char of rows[i]) {
+                    if (isNaN(char)) {
+                        gameState.board[i][col] = char;
+                        col++;
+                    } else {
+                        col += parseInt(char);
+                    }
+                }
+            }
+            
+            gameState.currentTurn = parts[1] === 'w' ? 'white' : 'black';
+            updateBoard();
+            updateDisplay();
+            
+            // Анализируем позицию
+            if (gameState.stockfishReady) {
+                analyzePosition();
+            }
+        }
+
+        function getFEN() {
+            let fen = '';
+            
+            // Доска
+            for (let row = 0; row < 8; row++) {
+                let empty = 0;
+                for (let col = 0; col < 8; col++) {
+                    const piece = gameState.board[row][col];
+                    if (piece) {
+                        if (empty > 0) {
+                            fen += empty;
+                            empty = 0;
+                        }
+                        fen += piece;
+                    } else {
+                        empty++;
+                    }
+                }
+                if (empty > 0) fen += empty;
+                if (row < 7) fen += '/';
+            }
+            
+            // Очередь хода
+            fen += ' ' + (gameState.currentTurn === 'white' ? 'w' : 'b');
+            
+            // Рокировки (упрощенно)
+            fen += ' KQkq';
+            
+            // Взятие на проходе (нет)
+            fen += ' -';
+            
+            // Правило 50 ходов
+            fen += ' 0';
+            
+            // Номер хода
+            fen += ' ' + (Math.floor(gameState.moves.length / 2) + 1);
+            
+            return fen;
+        }
+
+        // ==================== ИГРОВАЯ ЛОГИКА ====================
+        function startNewGame() {
+            gameState.selectedSquare = null;
+            gameState.legalMoves = [];
+            gameState.moves = [];
+            gameState.isGameActive = true;
+            gameState.currentPositionEval = 0.00;
+            
+            loadFEN(INITIAL_FEN);
+            updateDisplay();
+            
+            // Если игрок черными, Stockfish ходит первым
+            if (gameState.playerColor === 'black') {
+                setTimeout(() => makeEngineMove(), 1000);
+            }
+        }
+
+        function handleSquareClick(row, col) {
+            if (!gameState.isGameActive || !gameState.stockfishReady) return;
+            
+            // Если игрок черными, преобразуем координаты
+            let actualRow = row, actualCol = col;
+            if (gameState.playerColor === 'black') {
+                actualRow = 7 - row;
+                actualCol = 7 - col;
+            }
+            
+            const piece = gameState.board[actualRow]?.[actualCol];
+            const isPlayerTurn = gameState.currentTurn === gameState.playerColor;
+            
+            if (!isPlayerTurn) return;
+            
+            // Если выбрана фигура игрока
+            if (piece) {
+                const isPlayerPiece = (gameState.playerColor === 'white' && piece === piece.toUpperCase()) ||
+                                     (gameState.playerColor === 'black' && piece === piece.toLowerCase());
+                
+                if (isPlayerPiece) {
+                    clearSelection();
+                    
+                    // Находим квадрат для отображения
+                    let displayRow = actualRow, displayCol = actualCol;
+                    if (gameState.playerColor === 'black') {
+                        displayRow = 7 - actualRow;
+                        displayCol = 7 - actualCol;
+                    }
+                    
+                    const square = document.querySelector(`.board-square[data-row="${displayRow}"][data-col="${displayCol}"]`);
+                    square.classList.add('selected');
+                    
+                    gameState.selectedSquare = { row: actualRow, col: actualCol };
+                    calculateLegalMoves(actualRow, actualCol, piece);
+                    showLegalMoves();
+                }
+            }
+            // Если выбрана клетка для хода
+            else if (gameState.selectedSquare) {
+                const from = gameState.selectedSquare;
+                const to = { row: actualRow, col: actualCol };
+                
+                if (isLegalMove(from, to)) {
+                    makeMove(from, to);
+                }
+                clearSelection();
+            }
+        }
+
+        function calculateLegalMoves(row, col, piece) {
+            gameState.legalMoves = [];
+            const pieceType = piece.toLowerCase();
+            const isWhite = piece === piece.toUpperCase();
+            
+            switch(pieceType) {
+                case 'p': // Пешка
+                    calculatePawnMoves(row, col, isWhite);
+                    break;
+                case 'n': // Конь
+                    calculateKnightMoves(row, col, isWhite);
+                    break;
+                case 'b': // Слон
+                    calculateSliderMoves(row, col, isWhite, DIRECTIONS.bishop);
+                    break;
+                case 'r': // Ладья
+                    calculateSliderMoves(row, col, isWhite, DIRECTIONS.rook);
+                    break;
+                case 'q': // Ферзь
+                    calculateSliderMoves(row, col, isWhite, DIRECTIONS.queen);
+                    break;
+                case 'k': // Король
+                    calculateKingMoves(row, col, isWhite);
+                    break;
+            }
+        }
+
+        function calculatePawnMoves(row, col, isWhite) {
+            const direction = isWhite ? -1 : 1;
+            const startRow = isWhite ? 6 : 1;
+            
+            // Ход вперед на одну клетку
+            let newRow = row + direction;
+            if (newRow >= 0 && newRow < 8 && !gameState.board[newRow][col]) {
+                gameState.legalMoves.push({ row: newRow, col, type: 'move' });
+                
+                // Двойной ход с начальной позиции
+                if (row === startRow) {
+                    newRow = row + 2 * direction;
+                    if (!gameState.board[newRow][col]) {
+                        gameState.legalMoves.push({ row: newRow, col, type: 'move' });
+                    }
+                }
+            }
+            
+            // Взятия
+            const captures = [[direction, -1], [direction, 1]];
+            for (const [dr, dc] of captures) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                    const targetPiece = gameState.board[newRow][newCol];
+                    if (targetPiece) {
+                        const isEnemy = (isWhite && targetPiece === targetPiece.toLowerCase()) ||
+                                       (!isWhite && targetPiece === targetPiece.toUpperCase());
+                        if (isEnemy) {
+                            gameState.legalMoves.push({ row: newRow, col: newCol, type: 'capture' });
+                        }
+                    }
+                }
+            }
+        }
+
+        function calculateKnightMoves(row, col, isWhite) {
+            for (const [dr, dc] of DIRECTIONS.knight) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                    const targetPiece = gameState.board[newRow][newCol];
+                    if (!targetPiece) {
+                        gameState.legalMoves.push({ row: newRow, col: newCol, type: 'move' });
+                    } else {
+                        const isEnemy = (isWhite && targetPiece === targetPiece.toLowerCase()) ||
+                                       (!isWhite && targetPiece === targetPiece.toUpperCase());
+                        if (isEnemy) {
+                            gameState.legalMoves.push({ row: newRow, col: newCol, type: 'capture' });
+                        }
+                    }
+                }
+            }
+        }
+
+        function calculateSliderMoves(row, col, isWhite, directions) {
+            for (const [dr, dc] of directions) {
+                let currentRow = row + dr;
+                let currentCol = col + dc;
+                
+                while (currentRow >= 0 && currentRow < 8 && currentCol >= 0 && currentCol < 8) {
+                    const targetPiece = gameState.board[currentRow][currentCol];
+                    
+                    if (!targetPiece) {
+                        gameState.legalMoves.push({ row: currentRow, col: currentCol, type: 'move' });
+                    } else {
+                        const isEnemy = (isWhite && targetPiece === targetPiece.toLowerCase()) ||
+                                       (!isWhite && targetPiece === targetPiece.toUpperCase());
+                        if (isEnemy) {
+                            gameState.legalMoves.push({ row: currentRow, col: currentCol, type: 'capture' });
+                        }
+                        break;
+                    }
+                    
+                    currentRow += dr;
+                    currentCol += dc;
+                }
+            }
+        }
+
+        function calculateKingMoves(row, col, isWhite) {
+            for (const [dr, dc] of DIRECTIONS.king) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                    const targetPiece = gameState.board[newRow][newCol];
+                    if (!targetPiece) {
+                        gameState.legalMoves.push({ row: newRow, col: newCol, type: 'move' });
+                    } else {
+                        const isEnemy = (isWhite && targetPiece === targetPiece.toLowerCase()) ||
+                                       (!isWhite && targetPiece === targetPiece.toUpperCase());
+                        if (isEnemy) {
+                            gameState.legalMoves.push({ row: newRow, col: newCol, type: 'capture' });
+                        }
+                    }
+                }
+            }
+        }
+
+        function showLegalMoves() {
+            for (const move of gameState.legalMoves) {
+                let displayRow = move.row;
+                let displayCol = move.col;
+                
+                if (gameState.playerColor === 'black') {
+                    displayRow = 7 - move.row;
+                    displayCol = 7 - move.col;
+                }
+                
+                const square = document.querySelector(`.board-square[data-row="${displayRow}"][data-col="${displayCol}"]`);
+                if (move.type === 'capture') {
+                    square.classList.add('legal-capture');
+                } else {
+                    square.classList.add('legal-move');
+                }
+            }
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.board-square.selected').forEach(sq => sq.classList.remove('selected'));
+            document.querySelectorAll('.board-square.legal-move, .board-square.legal-capture').forEach(sq => {
+                sq.classList.remove('legal-move', 'legal-capture');
+            });
+            gameState.selectedSquare = null;
+            gameState.legalMoves = [];
+        }
+
+        function isLegalMove(from, to) {
+            return gameState.legalMoves.some(move => 
+                move.row === to.row && move.col === to.col
+            );
+        }
+
+        function makeMove(from, to) {
+            const piece = gameState.board[from.row][from.col];
+            
+            // Проверяем превращение пешки
+            const isPawn = piece.toLowerCase() === 'p';
+            const isWhite = piece === 'P';
+            const lastRow = isWhite ? 0 : 7;
+            
+            let promotion = '';
+            if (isPawn && to.row === lastRow) {
+                // Автоматическое превращение в ферзя
+                promotion = 'q';
+            }
+            
+            // Выполняем ход
+            gameState.board[to.row][to.col] = promotion ? 
+                (isWhite ? promotion.toUpperCase() : promotion) : piece;
+            gameState.board[from.row][from.col] = null;
+            
+            // Меняем очередь хода
+            gameState.currentTurn = gameState.currentTurn === 'white' ? 'black' : 'white';
+            
+            // Сохраняем ход
+            const fromNotation = `${String.fromCharCode(97 + from.col)}${8 - from.row}`;
+            const toNotation = `${String.fromCharCode(97 + to.col)}${8 - to.row}`;
+            const moveNotation = fromNotation + toNotation + (promotion || '');
+            gameState.moves.push(moveNotation);
+            
+            updateBoard();
+            updateDisplay();
+            
+            // Анализируем позицию
+            if (gameState.stockfishReady) {
+                analyzePosition();
+            }
+            
+            // Проверяем состояние игры
+            checkGameState();
+            
+            // Если игра продолжается и очередь Stockfish
+            if (gameState.isGameActive && gameState.currentTurn !== gameState.playerColor) {
+                setTimeout(() => makeEngineMove(), 500);
+            }
+        }
+
+        // ==================== STOCKFISH ====================
+        function makeEngineMove() {
+            if (!gameState.isGameActive || gameState.currentTurn === gameState.playerColor) return;
+            
+            if (gameState.stockfish && gameState.stockfishReady) {
+                // Используем настоящий Stockfish
+                const fen = getFEN();
+                const skillLevel = gameState.engineLevel;
+                
+                gameState.stockfish.postMessage(`position fen ${fen}`);
+                gameState.stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
+                gameState.stockfish.postMessage('go depth 15 movetime 2000');
+                
+                document.getElementById('game-status').textContent = 'Stockfish думает...';
+            } else {
+                // Локальная логика
+                setTimeout(() => {
+                    // Находим фигуры Stockfish
+                    const pieces = [];
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            const piece = gameState.board[row][col];
+                            if (piece) {
+                                const isEnginePiece = (gameState.playerColor === 'white' && piece === piece.toLowerCase()) ||
+                                                     (gameState.playerColor === 'black' && piece === piece.toUpperCase());
+                                if (isEnginePiece) {
+                                    pieces.push({ piece, row, col });
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (pieces.length === 0) return;
+                    
+                    // Выбираем случайную фигуру и генерируем ход
+                    const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
+                    calculateLegalMoves(randomPiece.row, randomPiece.col, randomPiece.piece);
+                    
+                    if (gameState.legalMoves.length > 0) {
+                        const randomMove = gameState.legalMoves[Math.floor(Math.random() * gameState.legalMoves.length)];
+                        makeMove(
+                            { row: randomPiece.row, col: randomPiece.col },
+                            { row: randomMove.row, col: randomMove.col }
+                        );
+                    }
+                    
+                    gameState.legalMoves = [];
+                }, 1000);
+            }
+        }
+
+        function executeEngineMove(move) {
+            const fromNotation = move.substring(0, 2);
+            const toNotation = move.substring(2, 4);
+            const promotion = move.substring(4);
+            
+            const fromCol = fromNotation.charCodeAt(0) - 97;
+            const fromRow = 8 - parseInt(fromNotation[1]);
+            const toCol = toNotation.charCodeAt(0) - 97;
+            const toRow = 8 - parseInt(toNotation[1]);
+            
+            const from = { row: fromRow, col: fromCol };
+            const to = { row: toRow, col: toCol };
+            
+            // Выполняем ход
+            const piece = gameState.board[from.row][from.col];
+            gameState.board[to.row][to.col] = promotion ? 
+                (piece === 'P' ? promotion.toUpperCase() : promotion) : piece;
+            gameState.board[from.row][from.col] = null;
+            
+            // Меняем очередь хода
+            gameState.currentTurn = gameState.currentTurn === 'white' ? 'black' : 'white';
+            
+            // Сохраняем ход
+            gameState.moves.push(move);
+            
+            updateBoard();
+            updateDisplay();
+            
+            // Анализируем позицию
+            if (gameState.stockfishReady) {
+                analyzePosition();
+            }
+            
+            // Проверяем состояние игры
+            checkGameState();
+        }
+
+        function analyzePosition() {
+            if (!gameState.stockfish || !gameState.stockfishReady) return;
+            
+            const fen = getFEN();
+            gameState.stockfish.postMessage(`position fen ${fen}`);
+            gameState.stockfish.postMessage('go depth 10');
+        }
+
+        function updatePositionEval(cp) {
+            // cp - оценка в сантипешках с точки зрения белых
+            const evalValue = cp / 100;
+            
+            // Если игрок черные, инвертируем оценку
+            const playerEval = gameState.playerColor === 'white' ? evalValue : -evalValue;
+            gameState.currentPositionEval = playerEval;
+            
+            updateDisplay();
+        }
+
+        // ==================== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ====================
+        function updateDisplay() {
+            // Обновляем чей ход
+            document.getElementById('current-turn').textContent = 
+                gameState.currentTurn === 'white' ? 'белых' : 'черных';
+            
+            // Обновляем оценку позиции (с точки зрения игрока)
+            const evalScore = gameState.currentPositionEval;
+            const displayEval = Math.abs(evalScore) < 0.01 ? '0.00' : 
+                               evalScore > 0 ? `+${evalScore.toFixed(2)}` : evalScore.toFixed(2);
+            
+            document.getElementById('position-eval').textContent = displayEval;
+            document.getElementById('position-analysis').textContent = displayEval;
+            
+            // Описание оценки
+            const absEval = Math.abs(evalScore);
+            let description = 'Равная позиция';
+            if (absEval > 0.5) description = 'Небольшое преимущество';
+            if (absEval > 1.5) description = 'Четкое преимущество';
+            if (absEval > 3.0) description = 'Решающее преимущество';
+            if (absEval > 5.0) description = 'Подавляющее преимущество';
+            
+            if (evalScore > 0) {
+                description += ' ' + (gameState.playerColor === 'white' ? 'белых' : 'черных');
+            } else if (evalScore < 0) {
+                description += ' ' + (gameState.playerColor === 'white' ? 'черных' : 'белых');
+            }
+            
+            document.getElementById('eval-description').textContent = description;
+            
+            // Перспектива анализа
+            document.getElementById('eval-perspective').textContent = 
+                `С точки зрения ${gameState.playerColor === 'white' ? 'белых' : 'черных'}:`;
+            
+            // Полоса оценки (0-100%, где 50% - равная позиция)
+            const evalPercent = 50 + evalScore * 10;
+            const evalBar = document.getElementById('eval-bar');
+            if (evalBar) {
+                evalBar.style.left = `${Math.min(100, Math.max(0, evalPercent))}%`;
+            }
+            
+            // Обновляем счетчик ходов
+            document.getElementById('move-count').textContent = gameState.moves.length;
+            
+            // Обновляем статус игры
+            const statusElement = document.getElementById('game-status');
+            if (gameState.isGameActive) {
+                const isPlayerTurn = gameState.currentTurn === gameState.playerColor;
+                statusElement.textContent = isPlayerTurn ? 'Ваш ход' : 'Stockfish думает...';
+                statusElement.style.color = isPlayerTurn ? '#4cc9f0' : '#e94560';
+            } else {
+                statusElement.textContent = 'Игра завершена';
+            }
+            
+            // Обновляем ELO игрока
+            updatePlayerElo();
+        }
+
+        function updatePlayerElo() {
+            const baseElo = gameState.engineLevel * 100;
+            const moveCount = gameState.moves.length;
+            
+            // Оценка на основе точности ходов
+            let accuracyBonus = 0;
+            if (moveCount > 5) {
+                // Простая эвристика: чем ближе оценка к 0, тем лучше
+                const absEval = Math.abs(gameState.currentPositionEval);
+                if (absEval < 0.5) accuracyBonus = 50;
+                else if (absEval < 1.0) accuracyBonus = 25;
+                else if (absEval < 2.0) accuracyBonus = 0;
+                else accuracyBonus = -50;
+            }
+            
+            let elo = baseElo + accuracyBonus;
+            
+            // Учитываем длину партии
+            if (moveCount > 20) elo += 20;
+            if (moveCount > 40) elo += 30;
+            
+            // Ограничиваем разумными пределами
+            elo = Math.max(400, Math.min(2800, Math.round(elo)));
+            document.getElementById('player-elo').textContent = elo;
+        }
+
+        function checkGameState() {
+            // Простая проверка на конец игры
+            if (gameState.moves.length >= 50) {
+                gameState.isGameActive = false;
+                document.getElementById('game-status').textContent = 'Игра завершена (50 ходов)';
+            }
+        }
+
+        // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+        function setupEventListeners() {
+            // Новая игра
+            document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+            
+            // Выбор цвета
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const color = this.dataset.color;
+                    
+                    if (color === 'random') {
+                        gameState.playerColor = Math.random() > 0.5 ? 'white' : 'black';
+                    } else {
+                        gameState.playerColor = color;
+                    }
+                    
+                    // Обновляем активную кнопку
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    if (color !== 'random') {
+                        this.classList.add('active');
+                    } else {
+                        document.getElementById(`color-${gameState.playerColor}`).classList.add('active');
+                    }
+                    
+                    // Перезапускаем игру
+                    startNewGame();
+                });
+            });
+            
+            // Слайдер сложности
+            document.getElementById('difficulty-slider').addEventListener('input', function() {
+                gameState.engineLevel = parseInt(this.value);
+                document.getElementById('current-level').textContent = gameState.engineLevel;
+                document.getElementById('difficulty-text').textContent = 
+                    `Уровень ${gameState.engineLevel} (ELO ~${gameState.engineLevel * 100})`;
+                
+                // Обновляем настройку Stockfish
+                if (gameState.stockfish && gameState.stockfishReady) {
+                    gameState.stockfish.postMessage(`setoption name Skill Level value ${gameState.engineLevel}`);
+                }
+            });
+            
+            // Подсказка
+            document.getElementById('hint-btn').addEventListener('click', function() {
+                if (!gameState.isGameActive || gameState.currentTurn !== gameState.playerColor) return;
+                
+                // Просим Stockfish дать лучший ход
+                if (gameState.stockfish && gameState.stockfishReady) {
+                    const fen = getFEN();
+                    gameState.stockfish.postMessage(`position fen ${fen}`);
+                    gameState.stockfish.postMessage('go depth 10 movetime 1000');
+                    
+                    // Временно перехватываем ответ
+                    const originalHandler = gameState.stockfish.onmessage;
+                    gameState.stockfish.onmessage = function(event) {
+                        originalHandler(event);
+                        if (event.data.startsWith('bestmove')) {
+                            const bestmove = event.data.split(' ')[1];
+                            if (bestmove && bestmove !== '(none)') {
+                                showHint(bestmove);
+                            }
+                        }
+                    };
+                }
+            });
+        }
+
+        function showHint(move) {
+            const fromNotation = move.substring(0, 2);
+            const toNotation = move.substring(2, 4);
+            
+            const fromCol = fromNotation.charCodeAt(0) - 97;
+            const fromRow = 8 - parseInt(fromNotation[1]);
+            const toCol = toNotation.charCodeAt(0) - 97;
+            const toRow = 8 - parseInt(toNotation[1]);
+            
+            // Преобразуем координаты для отображения
+            let fromDisplayRow = fromRow, fromDisplayCol = fromCol;
+            let toDisplayRow = toRow, toDisplayCol = toCol;
+            
+            if (gameState.playerColor === 'black') {
+                fromDisplayRow = 7 - fromRow;
+                fromDisplayCol = 7 - fromCol;
+                toDisplayRow = 7 - toRow;
+                toDisplayCol = 7 - toCol;
+            }
+            
+            // Подсвечиваем рекомендуемый ход
+            clearSelection();
+            
+            const fromSquare = document.querySelector(`.board-square[data-row="${fromDisplayRow}"][data-col="${fromDisplayCol}"]`);
+            const toSquare = document.querySelector(`.board-square[data-row="${toDisplayRow}"][data-col="${toDisplayCol}"]`);
+            
+            if (fromSquare) {
+                fromSquare.classList.add('selected');
+                fromSquare.style.boxShadow = '0 0 10px #4cc9f0';
+            }
+            if (toSquare) {
+                // Проверяем, является ли ход взятием
+                const targetPiece = gameState.board[toRow][toCol];
+                if (targetPiece) {
+                    toSquare.classList.add('legal-capture');
+                } else {
+                    toSquare.classList.add('legal-move');
+                }
+                toSquare.style.boxShadow = '0 0 10px #4cc9f0';
+            }
+            
+            // Через 3 секунды убираем подсказку
+            setTimeout(() => {
+                clearSelection();
+                if (fromSquare) fromSquare.style.boxShadow = '';
+                if (toSquare) toSquare.style.boxShadow = '';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
